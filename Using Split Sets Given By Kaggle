@@ -14,7 +14,6 @@ require(readxl)
 Survival <- read.csv("~/Desktop/Root/Projects/Titanic Competition/gender_submission.csv", header = TRUE)
 Testing_Set <- read.csv("~/Desktop/Root/Projects/Titanic Competition/test.csv", header = TRUE)
 Training_Set <- read.csv("~/Desktop/Root/Projects/Titanic Competition/train.csv", header = TRUE)
-
 Training_Set <- Training_Set[-892,]
 
 ########## Data Analysis #########
@@ -116,7 +115,18 @@ Testing_Set$Age[which(is.na(Testing_Set$Age))] <- Testing_Set$Age[Missing_RID_Te
 Logit <- glm(Survived ~ Sex + Pclass + SibSp + Age, data = Training_Set, family = "binomial")
 summary(Logit)
 
+Percent <- c(1:101)
+Search <- as.data.frame(Percent)
+for(i in 1:101){
+  Search[,c("Accuracy", "Gradient Descent")] <- NA
+  Search$Percent[i] <- 0 + 0.01*i - 0.01
+}
+
+Testing_Set$Sex <- as.character(Testing_Set$Sex)
+Testing_Set$Sex[which(Testing_Set$Sex == "female")] <- 0
+Testing_Set$Sex[which(Testing_Set$Sex == "male")] <- 1
 Testing_Set$Sex <- as.numeric(Testing_Set$Sex)
+
 for(i in 1:101){
   Survival$Pred <- 1/(1 + exp(-predict(Logit, Testing_Set)))
   Survival$Pred[which(Survival$Pred >= Search$Percent[i])] <- 1
@@ -145,7 +155,7 @@ Survival$Pred <- factor(Survival$Pred)
 
 Logit_CM <- confusionMatrix(Survival$Survived, Survival$Pred, positive = "1")
 
-Logit_GD$overall[1]
+Logit_CM$overall[1]
 
 ### Applying Gradient Descent On Method 1: Logit ###
 
@@ -170,7 +180,8 @@ Cost <- function(Theta){
   return(J)
 }
 
-Initial_Theta <- c(Logit$coefficients[1], Logit$coefficients[2], Logit$coefficients[3], Logit$coefficients[4], Logit$coefficients[5])
+Initial_Theta <- NA
+for(i in 1:5){ Initial_Theta[i] <- Logit$coefficients[i] }
 
 Theta_Optim <- optim(fn = Cost, par = Initial_Theta)
 
@@ -179,13 +190,6 @@ X <- as.data.frame(Constant)
 X <- cbind(X,Testing_Set[,c(4, 5, 6, 7)])
 X$Constant <- 1
 X <- data.matrix(X)
-
-Percent <- c(1:101)
-Search <- as.data.frame(Percent)
-for(i in 1:101){
-  Search[,c("Accuracy", "Gradient Descent")] <- NA
-  Search$Percent[i] <- 0 + 0.01*i - 0.01
-}
 
 for(i in 1:101){
   Survival$Pred_GD <- Sig(X%*%Theta_Optim$par)
@@ -222,17 +226,18 @@ Logit_GD <- confusionMatrix(Survival$Survived, Survival$Pred_GD, positive = "1")
 # written by Amar Gondaliya on December 8th, 2013.                                          #
 #############################################################################################
 
+
+
 ### Model 2: Random Forest ###
 Training_Set$Survived <- factor(Training_Set$Survived)
-R_Forest <- randomForest(Survived ~ Sex + SibSp + Pclass + Age, data = Training_Set, ntree = 1000, maxnodes = choose(6, 2), ntry = floor(sqrt(6)), sampsize = floor(891*0.8))
-R_Forest
+R_Forest <- randomForest(Survived ~ Pclass + Sex + Age + SibSp, data = Training_Set, ntree = 1000, maxnodes = choose(6, 2), ntry = floor(sqrt(6)))
 
 Survival$Pred_R_Forest <- predict(R_Forest, Testing_Set)
 R_Forest_CM <- confusionMatrix(Survival$Survived, Survival$Pred_R_Forest, positive = "1")
 
 ### Model 3: Support Vector Machines ###
-SVM_C <- svm(Survived ~ Sex + SibSp + Pclass + Age, data = Training_Set, type = "C-classification", kernel = "radial")
-SVM_Nu <- svm(Survived ~ Sex + SibSp + Pclass + Age, data = Training_Set, type = "nu-classification", kernel = "radial")
+SVM_C <- svm(Survived ~ Pclass + Sex + Age + SibSp , data = Training_Set, type = "C-classification", kernel = "radial")
+SVM_Nu <- svm(Survived ~ Pclass + Sex + Age + SibSp, data = Training_Set, type = "nu-classification", kernel = "radial")
 
 Test <- Testing_Set[,c(2,4,5,6)]
 Survival$Pred_SVM_C <- predict(SVM_C, Test)
