@@ -44,6 +44,42 @@ Test <- Master[-TrID,]
 Check <- Test[,c(1:2)]
 for(i in length(Check$PassengerId)){ Check[,c("Pred", "Pred_GD", "Pred_R_Forest", "Pred_SVM_C", "Pred_SVM_Nu")] <- NA}
 
+# Data Analysis
+Age <- Training_Set$Age
+hist(Age, main = "Distribution of Age", xlab = "Age Bins", ylab = "Frequency", breaks = 50)
+
+Fare <- Training_Set$Fare
+hist(Fare, main = "Distribution of Fare", xlab = "Fare Bins", ylab = "Frequency", breaks = 50)
+
+##############################################################
+# Note that the distribution of the Age vector appears to be #
+# almost bimodal in nature. Additionally, we note that the   #
+# Fare vector is distributed pretty closely to a Chi sqaure  #
+# distribution.                                              #
+#                                                            #
+# Let us look at their relationship.                         #
+##############################################################
+
+plot(Age, Fare, main = "Relationship between Fare and Age", xlab = "Age", ylab = "Fare")
+
+###############################################################
+# Looking solely on the relationship of the two variables, it #
+# is clear that there does not seem to be a relationship      #
+# between the two variables. Choice is to omit Fare Variable  #
+###############################################################
+
+### Model Building and Design
+
+###############################################################
+# The purpose of this Kaggle exercise is to determine and     #
+# predict who will survive or perish based on consumer/       #
+# passenger characteristics. Naturally speaking, this would   #
+# lead us into using some sort of classification model. With  #
+# that goal in mind, we will attempt  to generate a set of    #
+# models and see how well it performs in this interesting     #
+# challenge.                                                  #
+###############################################################
+
 ### Model Test: Logit (Age)
 
 Samp_Size_Test <- length(which(is.na(Test$Age)))
