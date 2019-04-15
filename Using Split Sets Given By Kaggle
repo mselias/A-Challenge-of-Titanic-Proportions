@@ -37,7 +37,58 @@ hist(Age_Random, main = "Distribution of Randomly Assigned Age", xlab = "Age Bin
 # appears to be a viable solution.                             #
 ################################################################
 
-### Model Test: Logit (Age)
+### Model Test: Logit (With Age)
+
+for(i in length(Survival$PassengerId)){
+  Survival[, c("Pred", "Pred_GD", "Pred_R_Forest", "Pred_SVM_C", "Pred_SVM_Nu")] <- NA
+}
+
+Logit <- glm(Survived ~ Sex + Pclass + SibSp + Age, data = Training_Set, family = "binomial")
+summary(Logit)
+
+Percent <- c(1:101)
+Search <- as.data.frame(Percent)
+for(i in 1:101){
+  Search[,c("Accuracy", "Gradient Descent")] <- NA
+  Search$Percent[i] <- 0 + 0.01*i - 0.01
+}
+
+Testing_Set$Sex <- as.character(Testing_Set$Sex)
+Testing_Set$Sex[which(Testing_Set$Sex == "female")] <- 0
+Testing_Set$Sex[which(Testing_Set$Sex == "male")] <- 1
+Testing_Set$Sex <- as.numeric(Testing_Set$Sex)
+
+for(i in 1:101){
+  Survival$Pred <- 1/(1 + exp(-predict(Logit, Testing_Set)))
+  Survival$Pred[which(Survival$Pred >= Search$Percent[i])] <- 1
+  Survival$Pred[which(Survival$Pred < Search$Percent[i])] <- 0
+  Survival$Pred <- as.numeric(Survival$Pred)
+  Survival$Survived <- factor(Survival$Survived)
+  Survival$Pred <- factor(Survival$Pred)
+  
+  if(is.element(1, Survival$Pred) & is.element(0, Survival$Pred)){
+    Logit_CM <- confusionMatrix(Survival$Survived, Survival$Pred, positive = "1")
+    Search$Accuracy[i] <- Logit_CM$overall[1]
+  } else {
+    Search$Accuracy[i] <- -1
+  }
+}
+Search$Accuracy <- as.numeric(Search$Accuracy)
+max(Search$Accuracy)
+
+Survival$Pred <- 1/(1 + exp(-predict(Logit, Testing_Set)))
+A <- Search[which(Search$Accuracy == max(Search$Accuracy)),1]
+Survival$Pred[which(Survival$Pred >= A[1])] <- 1
+Survival$Pred[which(Survival$Pred < A[1])] <- 0
+Survival$Pred <- as.numeric(Survival$Pred)
+Survival$Survived <- factor(Survival$Survived)
+Survival$Pred <- factor(Survival$Pred)
+
+Logit_CM <- confusionMatrix(Survival$Survived, Survival$Pred, positive = "1")
+
+Logit_CM$overall[1]
+
+### Model Test: Logit (Without Age)
 
 for(i in length(Survival$PassengerId)){
   Survival[, c("Pred", "Pred_GD", "Pred_R_Forest", "Pred_SVM_C", "Pred_SVM_Nu")] <- NA
