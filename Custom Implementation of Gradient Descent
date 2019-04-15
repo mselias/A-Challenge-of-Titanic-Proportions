@@ -41,19 +41,7 @@ TrID <- sample(c(1:1309), floor(0.75*1309), replace = FALSE)
 Train <- Master[TrID,]
 Test <- Master[-TrID,]
 
-Check <- Test[,c(1:2)]
-for(i in length(Check$PassengerId)){ Check[,c("Pred", "Pred_GD", "Pred_R_Forest", "Pred_SVM_C", "Pred_SVM_Nu")] <- NA}
-
-### Model Test: Logit (With Age)
-
-Samp_Size_Test <- length(which(is.na(Test$Age)))
-Missing_RID_Test <- sample(which(!is.na(Test$Age)), Samp_Size_Test, replace = FALSE)
-Test$Age[which(is.na(Test$Age))] <- Test$Age[Missing_RID_Test]
-
-Logit <- glm(Survived ~ Sex + Pclass + SibSp + Age, data = Train, family = "binomial")
-summary(Logit)
-
-### Applying Gradient Descent On Method 1: Logit
+### Applying Gradient Descent: On Randomly Sampled Coefficients
 
 # Setting Up Matrix
 Constant <- c(1:length(Train$PassengerId))
@@ -64,7 +52,7 @@ X <- as.matrix(X)
 Choice <- as.numeric(as.matrix(Train$Survived))
 
 Theta <- NA
-for(i in 1:5){ Theta[i] <- Logit$coefficients[i] }
+for(i in 1:5){ Theta[i] <- sample(c(-5:5),1) }
 
 A <- Cost(Theta)
 
