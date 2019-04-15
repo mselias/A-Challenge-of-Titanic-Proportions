@@ -44,47 +44,50 @@ Test <- Master[-TrID,]
 Check <- Test[,c(1:2)]
 for(i in length(Check$PassengerId)){ Check[,c("Pred", "Pred_GD", "Pred_R_Forest", "Pred_SVM_C", "Pred_SVM_Nu")] <- NA}
 
-# Data Analysis
-Age <- Training_Set$Age
-hist(Age, main = "Distribution of Age", xlab = "Age Bins", ylab = "Frequency", breaks = 50)
+### Model Test: Logit (Without Age)
 
-Fare <- Training_Set$Fare
-hist(Fare, main = "Distribution of Fare", xlab = "Fare Bins", ylab = "Frequency", breaks = 50)
+Logit <- glm(Survived ~ Sex + Pclass + SibSp + Age, data = Train, family = "binomial")
+summary(Logit)
 
-##############################################################
-# Note that the distribution of the Age vector appears to be #
-# almost bimodal in nature. Additionally, we note that the   #
-# Fare vector is distributed pretty closely to a Chi sqaure  #
-# distribution.                                              #
-#                                                            #
-# Let us look at their relationship.                         #
-##############################################################
+Percent <- c(1:101)
+Search <- as.data.frame(Percent)
+for(i in 1:101){
+  Search[,c("Accuracy", "Gradient Descent")] <- NA
+  Search$Percent[i] <- 0 + 0.01*i - 0.01
+}
 
-plot(Age, Fare, main = "Relationship between Fare and Age", xlab = "Age", ylab = "Fare")
+Test$Sex <- as.numeric(Test$Sex)
+for(i in 1:101){
+  Check$Pred <- 1/(1 + exp(-predict(Logit, Test)))
+  Check$Pred[which(Check$Pred >= Search$Percent[i])] <- 1
+  Check$Pred[which(Check$Pred < Search$Percent[i])] <- 0
+  Check$Pred <- as.numeric(Check$Pred)
+  Check$Survived <- factor(Check$Survived)
+  Check$Pred <- factor(Check$Pred)
+  
+  if(is.element(1, Check$Pred) & is.element(0, Check$Pred)){
+    Logit_CM <- confusionMatrix(Check$Survived, Check$Pred, positive = "1")
+    Search$Accuracy[i] <- Logit_CM$overall[1]
+  } else {
+    Search$Accuracy[i] <- -1
+  }
+}
+Search$Accuracy <- as.numeric(Search$Accuracy)
+max(Search$Accuracy)
 
-###############################################################
-# Looking solely on the relationship of the two variables, it #
-# is clear that there does not seem to be a relationship      #
-# between the two variables. Choice is to omit Fare Variable  #
-###############################################################
+Check$Pred <- 1/(1 + exp(-predict(Logit, Test)))
+A <- Search[which(Search$Accuracy == max(Search$Accuracy)),1]
+Check$Pred[which(Check$Pred >= A[1])] <- 1
+Check$Pred[which(Check$Pred < A[1])] <- 0
+Check$Pred <- as.numeric(Check$Pred)
+Check$Survived <- factor(Check$Survived)
+Check$Pred <- factor(Check$Pred)
 
-### Model Building and Design
+Logit_CM <- confusionMatrix(Check$Survived, Check$Pred, positive = "1")
 
-###############################################################
-# The purpose of this Kaggle exercise is to determine and     #
-# predict who will survive or perish based on consumer/       #
-# passenger characteristics. Naturally speaking, this would   #
-# lead us into using some sort of classification model. With  #
-# that goal in mind, we will attempt  to generate a set of    #
-# models and see how well it performs in this interesting     #
-# challenge.                                                  #
-###############################################################
+Logit_CM$overall[1]
 
-### Model Test: Logit (Age)
-
-Samp_Size_Test <- length(which(is.na(Test$Age)))
-Missing_RID_Test <- sample(which(!is.na(Test$Age)), Samp_Size_Test, replace = FALSE)
-Test$Age[which(is.na(Test$Age))] <- Test$Age[Missing_RID_Test]
+### Model Test: Logit (With Age)
 
 Logit <- glm(Survived ~ Sex + Pclass + SibSp + Age, data = Train, family = "binomial")
 summary(Logit)
@@ -132,7 +135,7 @@ Logit_CM$overall[1]
 # Setting Up Matrix
 Constant <- c(1:length(Train$PassengerId))
 X <- as.data.frame(Constant)
-X <- cbind(X,Train[,c(5, 6, 7, 8)])
+X <- cbind(X,Train[,c(5, 3, 7, 6)])
 X$Constant <- 1
 X <- as.matrix(X)
 Choice <- as.numeric(as.matrix(Train$Survived))
@@ -158,7 +161,7 @@ Theta_Optim <- optim(fn = Cost, par = Initial_Theta, gr = "BFGS")
 
 Constant <- c(1:length(Test$PassengerId))
 X <- as.data.frame(Constant)
-X <- cbind(X,Test[,c(5, 6, 7, 8)])
+X <- cbind(X,Test[,c(5, 3, 7, 6)])
 X$Constant <- 1
 X <- data.matrix(X)
 
