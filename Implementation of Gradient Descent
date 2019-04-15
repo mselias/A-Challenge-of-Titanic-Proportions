@@ -1,4 +1,4 @@
-######### Titanic Model: Conventional Method
+######### Implementation of Gradient Descent Without Optim
 
 # Packages
 require(caret)
