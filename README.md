@@ -1,4 +1,4 @@
-# Data-Science-Theories-And-Methods
+# Data Science Theories And Methods
 
 This project goes over data science theories and data preprocessing, leveraging the Titanic data set provided by Kaggle, with a goal of determining which passengers will likely survive or perish the monumental tragedy. The binary classification problem was tackled using two methods with three machine learning algorithms respectively. 
 
